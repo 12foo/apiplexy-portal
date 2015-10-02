@@ -1,0 +1,22 @@
+{
+  "name": "apiplexy-portal",
+  "version": "0.1.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "webpack-dev-server --quiet --content-base dist/",
+    "build": "rm -rf dist/ && mkdir dist && webpack --optimize-minimize"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "coffee-loader": "^0.7.2",
+    "coffee-script": "^1.10.0",
+    "file-loader": "^0.8.4",
+    "lodash": "^3.10.1",
+    "marked": "^0.3.5",
+    "mithril": "^0.2.0",
+    "webpack": "^1.12.2",
+    "webpack-dev-server": "^1.12.0"
+  }
+}
