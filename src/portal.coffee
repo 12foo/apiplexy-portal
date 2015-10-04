@@ -25,37 +25,55 @@ input = (type, label, placeholder, target) ->
 
 LoginBox =
     controller: ->
-        error = m.prop null
-
         c =
+            error: m.prop null
+            success: m.prop null
             email: m.prop ''
             password: m.prop ''
             fullname: m.prop ''
             passwordVerify: m.prop ''
+            needsActivation: m.prop false
             forgotPassword: m.prop false
             createAccount: m.prop false
 
-        c.error = -> if error() then m '.alert.alert-danger', error() else null
+        c.showMessages = -> [
+            if c.error() then m '.alert.alert-danger', c.error() else null
+            if c.success() then m '.alert.alert-success', c.success() else null
+        ]
 
-        c.doSignIn = ->
-            console.log 'blort'
+        c.doSignIn = (e) ->
+            e.preventDefault()
+            c.error null
+            if c.email() == '' or c.password() == ''
+                c.error "Please fill out all the fields."
+                return
+            requests.getToken c.email(), c.password()
+            .then (token) ->
+                console.log token
+            , (err) ->
+                c.error err.error
 
         c.doCreateAccount = (e) ->
             e.preventDefault()
-            error null
+            c.error null
             if c.email() == '' or c.fullname() == '' or c.password() == ''
-                error "Please fill out all the fields."
+                c.error "Please fill out all the fields."
                 return
             if c.passwordVerify() != c.password()
-                error "Your passwords don't match."
+                c.error "Your passwords don't match."
                 return
             requests.createAccount c.email(), c.fullname(), c.password()
             .then (created) ->
-                console.log created
-            , (error) ->
-                console.log error
+                if created.active
+                    c.success 'Account created. Please log in below.'
+                    c.createAccount false
+                else
+                    c.needsActivation true
 
-        c.doResetPassword = ->
+            , (err) ->
+                c.error err.error
+
+        c.doResetPassword = (e) ->
 
         return c
 
@@ -67,27 +85,31 @@ LoginBox =
             if c.createAccount()
                 m '.panel.panel-default', [
                     m '.panel-heading', m 'h4', 'Create an account'
-                    m '.panel-body', [
-                        m 'form',
-                            onsubmit: c.doCreateAccount
-                        , m 'fieldset', [
-                            c.error()
-                            input 'text', 'Your email', 'you@example.com', c.email
-                            input 'text', 'Your full name', 'Your Name', c.fullname
-                            input 'password', 'Password', '', c.password
-                            input 'password', 'Password (again)', '', c.passwordVerify
-                            m 'button[type=submit].btn.btn-primary', 'Create Account'
-                            m 'span',
-                                style: marginLeft: '1em'
-                            , [
-                                'or  '
-                                m 'a',
-                                    style: cursor: 'pointer'
-                                    onclick: -> c.createAccount false
-                                , 'go back'
+                    if c.needsActivation()
+                        m '.panel-body', m 'p',
+                        "We've sent you an activation email. Please check your inbox and follow the instructions."
+                    else
+                        m '.panel-body', [
+                            m 'form',
+                                onsubmit: c.doCreateAccount
+                            , m 'fieldset', [
+                                c.showMessages()
+                                input 'text', 'Your email', 'you@example.com', c.email
+                                input 'text', 'Your full name', 'Your Name', c.fullname
+                                input 'password', 'Password', '', c.password
+                                input 'password', 'Password (again)', '', c.passwordVerify
+                                m 'button[type=submit].btn.btn-primary', 'Create Account'
+                                m 'span',
+                                    style: marginLeft: '1em'
+                                , [
+                                    'or  '
+                                    m 'a',
+                                        style: cursor: 'pointer'
+                                        onclick: -> c.error null; c.createAccount false
+                                    , 'go back'
+                                ]
                             ]
                         ]
-                    ]
                 ]
             else if c.forgotPassword()
                 m '.panel.panel-default', [
@@ -96,6 +118,7 @@ LoginBox =
                         m 'form',
                             onsubmit: c.doResetPassword
                         , m 'fieldset', [
+                            c.showMessages()
                             m 'p', 'We will send a reset link to your email.'
                             input 'text', 'Email', 'you@example.com', c.email
                             m 'button[type=submit].btn.btn-primary', 'Send link'
@@ -105,7 +128,7 @@ LoginBox =
                                 'or  '
                                 m 'a',
                                     style: cursor: 'pointer'
-                                    onclick: -> c.forgotPassword false
+                                    onclick: -> c.error null; c.forgotPassword false
                                 , 'go back'
                             ]
                         ]
@@ -118,13 +141,14 @@ LoginBox =
                         m 'form',
                             onsubmit: c.doSignIn
                         , m 'fieldset', [
+                            c.showMessages()
                             m 'p', 'Sign in to manage your keys.'
                             input 'text', 'Email', 'you@example.com', c.email
                             input 'password', [
                                 m 'span', 'Password ('
                                 m 'a',
                                     style: cursor: 'pointer'
-                                    onclick: -> c.forgotPassword true
+                                    onclick: -> c.error null; c.forgotPassword true
                                 , "can't remember?"
                                 m 'span', ')'
                             ], '', c.password
@@ -135,7 +159,7 @@ LoginBox =
                                 'or  '
                                 m 'a',
                                     style: cursor: 'pointer'
-                                    onclick: -> c.createAccount true
+                                    onclick: -> c.error null; c.createAccount true
                                 , 'create an account'
                             ]
                         ]
