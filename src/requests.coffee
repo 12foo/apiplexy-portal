@@ -1,8 +1,8 @@
 
-api = window.config.portalAPIPath
-redirect = (path) ->
+api = window.config.connect
+portalLink = (path) ->
     separator = if m.route.mode == 'search' then '?' else '#'
-    return window.config.portalPath + '/' + separator + path
+    return window.location.protocol + '//' + window.location.host + window.location.pathname + separator + path
 
 exports.getToken = (email, password) ->
     return m.request
@@ -20,4 +20,12 @@ exports.createAccount = (email, name, password) ->
             email: email
             name: name
             password: password
-            after: redirect '/activated'
+            # the portal will replace 'CODE' with the actual activation code
+            # in the email
+            link: portalLink '/activate/CODE'
+
+exports.activateAccount = (code) ->
+    return m.request
+        method: 'GET'
+        url: api + '/account/activate/' + code
+        background: true

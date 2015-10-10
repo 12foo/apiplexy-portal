@@ -174,8 +174,46 @@ Portal =
             m '.col-md-4', m.component LoginBox
         ]
 
+Activate =
+    controller: ->
+        running = m.prop true
+        error = m.prop null
+        code = m.route.param("code")
+
+        requests.activateAccount code
+        .then (success) ->
+            running false
+            m.redraw()
+            setTimeout ->
+                m.route '/'
+            , 5000
+        , (err) ->
+            error err.error
+            running false
+            m.redraw()
+
+        return {
+            running: running
+            error: error
+        }
+    view: (c) ->
+        if c.running()
+            m '', 'Trying to activate your account. Please wait...'
+        else
+            if c.error()
+                m 'div.alert.alert-danger', [
+                    m 'h4', "Couldn't activate your account"
+                    m 'p', c.error()
+                ]
+            else
+                m 'div.alert.alert-success', [
+                    m 'h4', 'Account activated'
+                    m 'p', 'Taking you to the login screen in 5 seconds.'
+                ]
+
 m.route document.body, '/',
     '/': layout Portal
     '/pages/:page': layout Page
+    '/activate/:code': layout Activate
 
 document.title = config.title
