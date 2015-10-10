@@ -8,6 +8,7 @@ state = require 'state'
 layout = require 'layout'
 requests = require 'requests'
 PageViewer = require 'page'
+Keys = require 'keys'
 
 Page =
     controller: -> return page: m.route.param('page')
@@ -49,7 +50,8 @@ LoginBox =
                 return
             requests.getToken c.email(), c.password()
             .then (token) ->
-                console.log token
+                state.login token
+                m.route '/keys'
             , (err) ->
                 c.error err.error
 
@@ -80,6 +82,19 @@ LoginBox =
     view: (c) ->
         if state.token()
             m '.panel.panel-default', [
+                m '.panel-heading', m 'h4', state.token().name
+                m '.panel-body', [
+                    m 'p', 'You are signed in.'
+                    m 'button.btn.btn-primary',
+                        onclick: -> m.route '/keys'
+                    , 'Manage your keys'
+                    m 'span', ' or '
+                    m 'button.btn.btn-danger',
+                        onclick: ->
+                            state.logout()
+                            m.redraw()
+                    , 'Sign out'
+                ]
             ]
         else
             if c.createAccount()
@@ -214,6 +229,7 @@ Activate =
 m.route document.body, '/',
     '/': layout Portal
     '/pages/:page': layout Page
+    '/keys': layout Keys
     '/activate/:code': layout Activate
 
 document.title = config.title

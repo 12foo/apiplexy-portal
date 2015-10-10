@@ -1,3 +1,4 @@
+state = require 'state'
 
 api = window.config.connect
 portalLink = (path) ->
@@ -29,3 +30,40 @@ exports.activateAccount = (code) ->
         method: 'GET'
         url: api + '/account/activate/' + code
         background: true
+
+exports.getKeyTypes = ->
+    return m.request
+        method: 'GET'
+        config: (xhr) ->
+            xhr.setRequestHeader 'Authorization', 'Bearer ' + state.token().token
+        background: true
+        url: api + '/keys/types'
+
+exports.getKeys = ->
+    return m.request
+        method: 'GET'
+        config: (xhr) ->
+            xhr.setRequestHeader 'Authorization', 'Bearer ' + state.token().token
+        background: true
+        url: api + '/keys'
+
+exports.createKey = (type, realm) ->
+    return m.request
+        method: 'POST'
+        config: (xhr) ->
+            xhr.setRequestHeader 'Authorization', 'Bearer ' + state.token().token
+        background: true
+        url: api + '/keys'
+        data:
+            type: type
+            realm: realm
+
+exports.deleteKey = (id) ->
+    return m.request
+        method: 'POST'
+        config: (xhr) ->
+            xhr.setRequestHeader 'Authorization', 'Bearer ' + state.token().token
+        background: true
+        url: api + '/keys/delete'
+        data:
+            key_id: id
