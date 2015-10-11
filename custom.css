@@ -1,0 +1,9 @@
+div.quota td.period, div.quota td.quota-type { font-variant: small-caps; text-align: center; }
+div.quota td.period { border-bottom: 1px solid #333; }
+div.quota td.quota { width: 100px; height: 60px; position: relative; }
+div.quota td.quota canvas { width: 100px; height: 50px; }
+div.quota td.quota p.avg { position: absolute; top: 8px; width: 100px; text-align: center; 
+    font-size: 1.5em; font-weight: bold; }
+div.quota td.quota p.max { text-align: center; font-weight: bold; margin-top: 0px; }
+div.quota td.quota p.per-ip { font-size: 1.5em; text-align: center; font-weight: bold; }
+div.quota td.quota p.unlimited { text-align: center; }

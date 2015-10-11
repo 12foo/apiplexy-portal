@@ -1,6 +1,7 @@
 # copy static files
 require 'file?name=[name].[ext]!../index.html'
 require 'file?name=[name].[ext]!../bootstrap.min.css'
+require 'file?name=[name].[ext]!../custom.css'
 require 'file?name=pages/[name].[ext]!../default-pages/index.md'
 require 'file?name=pages/[name].[ext]!../default-pages/howto.md'
 

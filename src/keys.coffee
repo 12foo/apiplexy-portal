@@ -1,8 +1,14 @@
 state = require 'state'
 requests = require 'requests'
+gauge = require 'lib/gauge'
 
 # horrible! but there's no other way
 typeIsArray = Array.isArray || ( value ) -> return {}.toString.call( value ) is '[object Array]'
+
+gaugeOptions =
+    percentColors: [[0.0, '#23cf23'], [0.7, '#f7ff00'], [1.0, '#ff0000']]
+    angle: 0
+    lineWidth: 0.5
 
 module.exports =
     controller: ->
@@ -21,15 +27,52 @@ module.exports =
 
         c.clear()
 
+        c.renderQuota = (key) ->
+            m '.quota', [
+                if key.quota.minutes and key.quota.minutes > 0
+                    m 'table', m 'tbody', [
+                        m 'tr', m 'td[colspan=2].period', key.quota.minutes + " minute average"
+                        m 'tr', [
+                            m 'td.quota-type', 'This Key'
+                            m 'td.quota-type', 'Per IP'
+                        ]
+                        m 'tr', [
+                            m 'td.quota', if key.quota.max_key and key.quota.max_key > 0
+                                [
+                                    m 'canvas',
+                                        config: (el, init, ctx) ->
+                                            if !init
+                                                ctx.gauge = new gauge.Gauge(el).setOptions gaugeOptions
+                                                ctx.gauge.maxValue = key.quota.max_key
+                                                ctx.gauge.set(key.avg.toFixed(2))
+                                    m 'p.avg', Math.round(key.avg)
+                                    m 'p.max', key.quota.max_key
+                                ]
+                            else
+                                m 'p.unlimited', 'Unlimited'
+                            m 'td.quota', if key.quota.max_ip and key.quota.max_ip > 0
+                                m 'p.per-ip', key.quota.max_ip
+                            else
+                                m 'p.unlimited', 'Unlimited'
+                        ]
+                    ]
+                else
+                    m 'div.text-muted',
+                        style:
+                            textAlign: 'center'
+                            fontVariant: 'small-caps'
+                    , 'Unlimited'
+            ]
+
         c.renderKey = (key) -> m 'tr', [
             m 'td', [
-                m 'code', key.id
+                m 'code', key.key.id
                 m 'br'
-                m 'b', key.realm
+                m 'b', key.key.realm
                 m 'br'
-                m 'span.small', 'Type: ' + key.type
+                m 'span.badge', key.key.type
             ]
-            m 'td', m 'table', m 'tbody', _.pairs(key.data).map (d) ->
+            m 'td', m 'table', m 'tbody', _.pairs(key.key.data).map (d) ->
                 m 'tr', [
                     m 'th', d[0]
                     m 'td', if typeIsArray(d[1])
@@ -38,20 +81,20 @@ module.exports =
                     else
                         m 'code', d[1]
                 ]
-            m 'td', 'status'
-            m 'td', if _.includes c.prepDelete(), key.id
+            m 'td', c.renderQuota key
+            m 'td', if _.includes c.prepDelete(), key.key.id
                 [
                     m 'button.btn.btn-xs.btn-default',
-                        onclick: -> c.prepDelete _.without(c.prepDelete(), key.id)
+                        onclick: -> c.prepDelete _.without(c.prepDelete(), key.key.id)
                     , 'Cancel'
                     m 'br'
                     m 'button.btn.btn-xs.btn-danger',
-                        onclick: -> c.deleteKey key.id
+                        onclick: -> c.deleteKey key.key.id
                     , 'I\'m sure'
                 ]
             else
                 m 'button.btn.btn-xs.btn-danger',
-                    onclick: -> c.prepDelete _.xor c.prepDelete(), [key.id]
+                    onclick: -> c.prepDelete _.xor c.prepDelete(), [key.key.id]
                 , 'Delete'
         ]
 
@@ -104,7 +147,7 @@ module.exports =
                             m 'thead', m 'tr', [
                                 m 'th', 'Key ID / Realm'
                                 m 'th', 'Key Profile'
-                                m 'th', 'Quota'
+                                m 'th', 'Usage'
                                 m 'th', 'Delete'
                             ]
                             m 'tbody', c.keys().map c.renderKey
