@@ -67,3 +67,19 @@ exports.deleteKey = (id) ->
         url: api + '/keys/delete'
         data:
             key_id: id
+
+exports.requestResetPassword = (email) ->
+    return m.request
+        method: 'POST'
+        url: api + '/account/request'
+        data:
+            email: email
+            link: portalLink '/reset/CODE'
+
+exports.resetPassword = (code, password) ->
+    return m.request
+        method: 'POST'
+        url: api + '/account/reset'
+        data:
+            code: code
+            password: password

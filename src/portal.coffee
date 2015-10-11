@@ -77,6 +77,17 @@ LoginBox =
                 c.error err.error
 
         c.doResetPassword = (e) ->
+            e.preventDefault()
+            c.error null
+            c.success null
+            if c.email() == ''
+                c.error "Please fill out the email field."
+                return
+            requests.requestResetPassword c.email()
+            .then (requested) ->
+                c.success 'Reset link sent. Check your email.'
+            , (err) ->
+                c.error err.error
 
         return c
 
@@ -227,10 +238,64 @@ Activate =
                     m 'p', 'Taking you to the login screen in 5 seconds.'
                 ]
 
+Reset =
+    controller: ->
+        code = m.route.param("code")
+
+        c = {}
+        c.success = m.prop false
+        c.error = m.prop null
+        c.password = m.prop ''
+        c.verify = m.prop ''
+
+        c.resetPassword = (e) ->
+            e.preventDefault()
+            c.error null
+            if c.password() == ''
+                c.error 'Please specify a new password.'
+                return
+            if c.verify() != c.password()
+                c.error 'Both passwords must match.'
+                return
+
+            requests.resetPassword code, c.password()
+            .then (success) ->
+                c.success true
+                setTimeout ->
+                    m.route '/'
+                , 5000
+            , (err) ->
+                c.error err.error
+
+        return c
+
+    view: (c) ->
+        m '.row', m '.col-md-6.col-md-push-3', m '.panel', m '.panel-body',
+        if c.success()
+            m 'div.alert.alert-success', [
+                m 'h4', 'Password reset successful'
+                m 'p', 'Taking you to the login screen in 5 seconds.'
+            ]
+        else
+            m 'form',
+                onsubmit: c.resetPassword
+            , m 'fieldset', [
+                m 'legend', 'Reset your password'
+                if c.error()
+                    m 'div.alert.alert-danger', [
+                        m 'h4', "Couldn't reset password"
+                        m 'p', c.error()
+                    ]
+                input 'password', 'New password', '', c.password
+                input 'password', 'Type again', '', c.verify
+                m 'button[type=submit].btn.btn-primary', 'Reset password'
+            ]
+
 m.route document.body, '/',
     '/': layout Portal
     '/pages/:page': layout Page
     '/keys': layout Keys
     '/activate/:code': layout Activate
+    '/reset/:code': layout Reset
 
 document.title = config.title
